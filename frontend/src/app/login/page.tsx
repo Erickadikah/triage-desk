@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { setToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,7 +28,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { access_token } = await api.login({ email, password });
-      localStorage.setItem("token", access_token);
+      setToken(access_token);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

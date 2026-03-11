@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { api, type Ticket, type PaginatedTickets } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api, type Ticket } from "@/lib/api";
+import { removeToken } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProtectedRoute } from "@/components/protected-route";
 
 const priorityVariant = {
   High: "high",
@@ -14,19 +15,23 @@ const priorityVariant = {
   Low: "low",
 } as const;
 
-const statusVariant = {
-  Open: "open",
-  "In Progress": "in-progress",
-  Resolved: "resolved",
-} as const;
-
-const STATUSES = ["Open", "In Progress", "Resolved"] as const;
+const COLUMNS = [
+  { status: "Open", label: "Open", color: "bg-blue-500" },
+  { status: "In Progress", label: "In Progress", color: "bg-purple-500" },
+  { status: "Resolved", label: "Resolved", color: "bg-gray-400" },
+] as const;
 
 export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
+  );
+}
+
+function DashboardContent() {
   const router = useRouter();
-  const [data, setData] = useState<PaginatedTickets | null>(null);
-  const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [priorityFilter, setPriorityFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,16 +40,16 @@ export default function DashboardPage() {
     setLoading(true);
     setError("");
     try {
+      // Fetch all tickets (high per_page to get them all for the board)
       const result = await api.getTickets({
-        page,
-        per_page: 10,
-        status: statusFilter || undefined,
+        page: 1,
+        per_page: 100,
         priority: priorityFilter || undefined,
       });
-      setData(result);
+      setTickets(result.tickets);
     } catch (err) {
       if (err instanceof Error && err.message === "Invalid token") {
-        localStorage.removeItem("token");
+        removeToken();
         router.push("/login");
         return;
       }
@@ -52,129 +57,132 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, priorityFilter, router]);
+  }, [priorityFilter, router]);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      router.push("/login");
-      return;
-    }
     fetchTickets();
-  }, [fetchTickets, router]);
+  }, [fetchTickets]);
 
   async function handleStatusChange(ticketId: string, newStatus: string) {
+    // Optimistic update — move the ticket immediately
+    const previousTickets = [...tickets];
+    setTickets((prev) =>
+      prev.map((t) =>
+        t.id === ticketId ? { ...t, status: newStatus as Ticket["status"] } : t
+      )
+    );
+
     try {
       await api.updateTicketStatus(ticketId, newStatus);
-      fetchTickets();
     } catch (err) {
+      // Revert on failure
+      setTickets(previousTickets);
       setError(
         err instanceof Error ? err.message : "Failed to update ticket"
       );
     }
   }
 
-  function handleLogout() {
-    localStorage.removeItem("token");
-    router.push("/login");
-  }
+  const ticketsByStatus = (status: string) =>
+    tickets.filter((t) => t.status === status);
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Ticket Dashboard
+            Agent Dashboard
           </h1>
           <p className="text-muted-foreground mt-1">
-            {data ? `${data.total} total tickets` : "Loading..."}
+            {tickets.length} ticket{tickets.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <Select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-          className="w-44"
-        >
-          <option value="">All Statuses</option>
-          <option value="Open">Open</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Resolved">Resolved</option>
-        </Select>
-
-        <Select
-          value={priorityFilter}
-          onChange={(e) => {
-            setPriorityFilter(e.target.value);
-            setPage(1);
-          }}
-          className="w-44"
-        >
-          <option value="">All Priorities</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </Select>
+        <div className="flex items-center gap-3">
+          <Select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="w-44"
+          >
+            <option value="">All Priorities</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </Select>
+        </div>
       </div>
 
       {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
-
-      {/* Ticket list */}
-      {loading ? (
-        <p className="text-muted-foreground text-sm">Loading tickets...</p>
-      ) : data && data.tickets.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No tickets found.</p>
-      ) : (
-        <div className="space-y-3">
-          {data?.tickets.map((ticket) => (
-            <TicketRow
-              key={ticket.id}
-              ticket={ticket}
-              onStatusChange={handleStatusChange}
-            />
-          ))}
+        <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3">
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
 
-      {/* Pagination */}
-      {data && data.total_pages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {data.page} of {data.total_pages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= data.total_pages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </Button>
+      {/* Kanban Board */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {COLUMNS.map((col) => (
+            <KanbanColumn
+              key={col.status}
+              label={col.label}
+              color={col.color}
+              tickets={ticketsByStatus(col.status)}
+              onStatusChange={handleStatusChange}
+            />
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function TicketRow({
+function KanbanColumn({
+  label,
+  color,
+  tickets,
+  onStatusChange,
+}: {
+  label: string;
+  color: string;
+  tickets: Ticket[];
+  onStatusChange: (id: string, status: string) => void;
+}) {
+  return (
+    <div className="flex flex-col rounded-lg border border-border bg-muted/30 min-h-[60vh]">
+      {/* Column header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+        <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
+        <h2 className="text-sm font-semibold">{label}</h2>
+        <span className="ml-auto text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+          {tickets.length}
+        </span>
+      </div>
+
+      {/* Cards */}
+      <div className="flex-1 p-2 space-y-2 overflow-y-auto">
+        {tickets.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-8">
+            No tickets
+          </p>
+        ) : (
+          tickets.map((ticket) => (
+            <TicketCard
+              key={ticket.id}
+              ticket={ticket}
+              onStatusChange={onStatusChange}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TicketCard({
   ticket,
   onStatusChange,
 }: {
@@ -182,44 +190,41 @@ function TicketRow({
   onStatusChange: (id: string, status: string) => void;
 }) {
   return (
-    <Card>
-      <CardContent className="py-4 px-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0 space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-medium truncate">{ticket.title}</h3>
-              <Badge variant={priorityVariant[ticket.priority]}>
-                {ticket.priority}
-              </Badge>
-              <Badge variant={statusVariant[ticket.status]}>
-                {ticket.status}
-              </Badge>
-              <Badge variant="secondary">{ticket.category}</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {ticket.description}
-            </p>
-            {ticket.ai_reasoning && (
-              <p className="text-xs text-muted-foreground italic">
-                AI: {ticket.ai_reasoning}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {ticket.customer_email} &middot;{" "}
-              {new Date(ticket.created_at).toLocaleDateString()}
-            </p>
-          </div>
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="p-3 space-y-2">
+        <h3 className="text-sm font-medium leading-snug">{ticket.title}</h3>
 
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Badge variant={priorityVariant[ticket.priority]} className="text-[10px] px-1.5 py-0">
+            {ticket.priority}
+          </Badge>
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+            {ticket.category}
+          </Badge>
+        </div>
+
+        <p className="text-xs text-muted-foreground line-clamp-2">
+          {ticket.description}
+        </p>
+
+        {ticket.ai_reasoning && (
+          <p className="text-[11px] text-muted-foreground italic border-l-2 border-primary/30 pl-2">
+            {ticket.ai_reasoning}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between pt-1 border-t border-border/50">
+          <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+            {ticket.customer_email}
+          </span>
           <Select
             value={ticket.status}
             onChange={(e) => onStatusChange(ticket.id, e.target.value)}
-            className="w-36 shrink-0"
+            className="h-7 text-xs w-[110px] px-1.5 py-0"
           >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
           </Select>
         </div>
       </CardContent>
