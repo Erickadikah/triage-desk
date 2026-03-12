@@ -1,3 +1,5 @@
+import { getToken } from "@/lib/auth";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface Ticket {
@@ -37,7 +39,7 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    typeof window !== "undefined" ? getToken() : null;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

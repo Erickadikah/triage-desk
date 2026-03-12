@@ -220,7 +220,7 @@ function TicketCard({
           <h3 className="text-sm font-medium leading-snug">{ticket.title}</h3>
           <button
             onClick={() => onDelete(ticket.id)}
-            className="text-muted-foreground hover:text-destructive transition-colors shrink-0 p-0.5"
+            className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer shrink-0 p-0.5"
             title="Delete ticket"
             aria-label="Delete ticket"
           >

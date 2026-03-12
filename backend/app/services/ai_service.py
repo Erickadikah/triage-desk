@@ -74,8 +74,14 @@ def _get_mock_triage(title: str, description: str) -> AITriageResult:
     )
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((anthropic.APIConnectionError, anthropic.RateLimitError)),
+    reraise=True,
+)
 def _triage_with_claude(prompt: str) -> AITriageResult:
-    """Attempt triage using Claude API."""
+    """Attempt triage using Claude API with retry on transient failures."""
     client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
@@ -87,13 +93,6 @@ def _triage_with_claude(prompt: str) -> AITriageResult:
     return _parse_ai_response(raw)
 
 
-
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
-    retry=retry_if_exception_type((anthropic.APIConnectionError, anthropic.RateLimitError)),
-    reraise=False,
-)
 async def triage_ticket(title: str, description: str) -> AITriageResult:
     """
     AI triage with fallback:

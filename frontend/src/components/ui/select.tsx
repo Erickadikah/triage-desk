@@ -39,7 +39,7 @@ function Select({ value, onChange, options, placeholder, className, size = "defa
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex w-full items-center justify-between rounded-md border border-border bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+          "flex w-full items-center justify-between rounded-md border border-border bg-background text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
           size === "sm" ? "h-7 px-2 py-1 text-xs" : "h-10 px-3 py-2",
           !selected && "text-muted-foreground"
         )}
@@ -73,7 +73,7 @@ function Select({ value, onChange, options, placeholder, className, size = "defa
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center hover:bg-muted transition-colors",
+                  "flex w-full items-center hover:bg-muted transition-colors cursor-pointer",
                   size === "sm" ? "px-2 py-1.5 text-xs" : "px-3 py-2 text-sm",
                   option.value === value && "bg-muted font-medium"
                 )}
