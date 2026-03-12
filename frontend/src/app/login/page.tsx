@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { CircleUser } from "lucide-react";
 import { api } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -38,9 +39,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-12">
+    <div className="max-w-md mx-auto mt-16">
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <CircleUser className="h-6 w-6 text-primary" />
+          </div>
           <CardTitle>Agent Login</CardTitle>
           <CardDescription>
             Sign in to access the ticket dashboard.
@@ -55,6 +59,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="agent@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -69,6 +74,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FilePlus, CheckCircle, X } from "lucide-react";
 import { api, type Ticket } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,8 +50,13 @@ export default function SubmitTicketPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Submit a Support Ticket</h1>
-        <p className="text-muted-foreground mt-1">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <FilePlus className="h-5 w-5 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">Submit a Support Ticket</h1>
+        </div>
+        <p className="text-muted-foreground mt-2">
           Describe your issue and our AI will automatically categorize and prioritize it.
         </p>
       </div>
@@ -147,14 +153,10 @@ export default function SubmitTicketPage() {
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" />
-            </svg>
+            <CheckCircle className="h-5 w-5 text-green-600" />
             <p className="text-sm font-medium text-green-800">Ticket created successfully!</p>
             <button onClick={() => setToast(false)} className="ml-2 text-green-600 hover:text-green-800" aria-label="Dismiss notification">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-              </svg>
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>

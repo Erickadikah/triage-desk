@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getToken, removeToken, AUTH_EVENT } from "@/lib/auth";
 
@@ -29,7 +30,8 @@ export function Navbar() {
   return (
     <nav className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-bold tracking-tight">
+        <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+          <FileText className="h-5 w-5 text-primary" />
           Triage Desk
         </Link>
         <div className="flex items-center gap-1">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { UserPlus } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,9 +38,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-12">
+    <div className="max-w-md mx-auto mt-16">
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <UserPlus className="h-6 w-6 text-primary" />
+          </div>
           <CardTitle>Create Account</CardTitle>
           <CardDescription>
             Register as a support agent to manage tickets.
@@ -53,6 +57,7 @@ export default function RegisterPage() {
               </label>
               <Input
                 id="name"
+                autoComplete="name"
                 placeholder="Jane Smith"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -67,6 +72,7 @@ export default function RegisterPage() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="agent@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -81,6 +87,7 @@ export default function RegisterPage() {
               <Input
                 id="password"
                 type="password"
+                autoComplete="new-password"
                 placeholder="Min 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

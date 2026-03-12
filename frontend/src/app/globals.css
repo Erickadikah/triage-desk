@@ -3,12 +3,12 @@
 @theme {
   --color-background: #ffffff;
   --color-foreground: #0a0a0a;
-  --color-muted: #f5f5f5;
-  --color-muted-foreground: #737373;
-  --color-border: #e5e5e5;
-  --color-primary: #171717;
-  --color-primary-foreground: #fafafa;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+  --color-border: #e4e4e7;
+  --color-primary: #4f46e5;
+  --color-primary-foreground: #ffffff;
   --color-destructive: #ef4444;
-  --color-accent: #f5f5f5;
-  --color-ring: #171717;
+  --color-accent: #eef2ff;
+  --color-ring: #4f46e5;
 }

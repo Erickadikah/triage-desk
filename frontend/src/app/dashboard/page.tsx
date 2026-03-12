@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api, type Ticket } from "@/lib/api";
+import { LayoutDashboard, Trash2 } from "lucide-react";
 import { removeToken } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
@@ -11,9 +12,9 @@ import { ProtectedRoute } from "@/components/protected-route";
 import { PRIORITY_VARIANT } from "@/lib/utils";
 
 const COLUMNS = [
-  { status: "Open", label: "Open", color: "bg-blue-500" },
-  { status: "In Progress", label: "In Progress", color: "bg-purple-500" },
-  { status: "Resolved", label: "Resolved", color: "bg-gray-400" },
+  { status: "Open", label: "Open", dot: "bg-blue-500", border: "border-t-blue-500" },
+  { status: "In Progress", label: "In Progress", dot: "bg-purple-500", border: "border-t-purple-500" },
+  { status: "Resolved", label: "Resolved", dot: "bg-emerald-500", border: "border-t-emerald-500" },
 ] as const;
 
 export default function DashboardPage() {
@@ -98,10 +99,15 @@ function DashboardContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Agent Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <LayoutDashboard className="h-5 w-5 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Agent Dashboard
+            </h1>
+          </div>
+          <p className="text-muted-foreground mt-2">
             {tickets.length} ticket{tickets.length !== 1 ? "s" : ""}
           </p>
         </div>
@@ -138,7 +144,8 @@ function DashboardContent() {
             <KanbanColumn
               key={col.status}
               label={col.label}
-              color={col.color}
+              dot={col.dot}
+              border={col.border}
               tickets={ticketsByStatus(col.status)}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
@@ -152,22 +159,24 @@ function DashboardContent() {
 
 function KanbanColumn({
   label,
-  color,
+  dot,
+  border,
   tickets,
   onStatusChange,
   onDelete,
 }: {
   label: string;
-  color: string;
+  dot: string;
+  border: string;
   tickets: Ticket[];
   onStatusChange: (id: string, status: string) => void;
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="flex flex-col rounded-lg border border-border bg-muted/30 min-h-[60vh]">
+    <div className={`flex flex-col rounded-lg border border-t-2 ${border} border-border bg-muted/30 min-h-[60vh]`}>
       {/* Column header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
+        <div className={`h-2.5 w-2.5 rounded-full ${dot}`} />
         <h2 className="text-sm font-semibold">{label}</h2>
         <span className="ml-auto text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">
           {tickets.length}
@@ -215,9 +224,7 @@ function TicketCard({
             title="Delete ticket"
             aria-label="Delete ticket"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-            </svg>
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
 
