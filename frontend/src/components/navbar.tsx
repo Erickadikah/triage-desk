@@ -34,7 +34,7 @@ export function Navbar() {
         </Link>
         <div className="flex items-center gap-1">
           <NavLink href="/" active={pathname === "/"}>
-            Submit Ticket
+            Create Ticket
           </NavLink>
           {loggedIn ? (
             <>

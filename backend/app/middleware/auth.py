@@ -31,7 +31,7 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
 ):
-    from app.models.ticket import User
+    from app.models.user import User
 
     token = credentials.credentials
     try:

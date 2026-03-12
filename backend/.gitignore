@@ -2,7 +2,6 @@
 __pycache__/
 *.pyc
 *.pyo
-*.__pycache__/
 .pytest_cache/
 test.db
 

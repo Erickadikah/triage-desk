@@ -4,7 +4,8 @@ from sqlalchemy import func
 from typing import Optional
 from uuid import UUID
 from app.database import get_db
-from app.models.ticket import Ticket, TicketStatus, TicketPriority, User
+from app.models.ticket import Ticket, TicketStatus, TicketPriority
+from app.models.user import User
 from app.schemas.ticket import TicketCreate, TicketUpdate, TicketResponse, PaginatedTickets
 from app.services.ai_service import triage_ticket
 from app.middleware.auth import get_current_user

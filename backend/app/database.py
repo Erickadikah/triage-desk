@@ -8,7 +8,7 @@ Base = declarative_base()
 
 
 def create_tables():
-    from app.models import ticket  # noqa: F401
+    from app.models import ticket, user  # noqa: F401
     Base.metadata.create_all(bind=engine)
 
 
