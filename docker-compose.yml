@@ -25,7 +25,6 @@ services:
       - ./backend/.env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/triagedesk
-      SECRET_KEY: change-this-in-production-use-a-long-random-string
       DEBUG: "true"
     depends_on:
       db:
