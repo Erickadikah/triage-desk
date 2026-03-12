@@ -55,6 +55,7 @@ async function request<T>(
     throw new ApiError(res.status, body.detail || "Request failed");
   }
 
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
@@ -107,16 +108,7 @@ export const api = {
     });
   },
 
-  async deleteTicket(id: string) {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    const res = await fetch(`${API_URL}/tickets/${id}`, { method: "DELETE", headers });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new ApiError(res.status, body.detail || "Delete failed");
-    }
+  deleteTicket(id: string) {
+    return request<void>(`/tickets/${id}`, { method: "DELETE" });
   },
 };

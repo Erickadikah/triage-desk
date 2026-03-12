@@ -8,12 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProtectedRoute } from "@/components/protected-route";
-
-const priorityVariant = {
-  High: "high",
-  Medium: "medium",
-  Low: "low",
-} as const;
+import { PRIORITY_VARIANT } from "@/lib/utils";
 
 const COLUMNS = [
   { status: "Open", label: "Open", color: "bg-blue-500" },
@@ -218,6 +213,7 @@ function TicketCard({
             onClick={() => onDelete(ticket.id)}
             className="text-muted-foreground hover:text-destructive transition-colors shrink-0 p-0.5"
             title="Delete ticket"
+            aria-label="Delete ticket"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
@@ -226,7 +222,7 @@ function TicketCard({
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Badge variant={priorityVariant[ticket.priority]} className="text-[10px] px-1.5 py-0">
+          <Badge variant={PRIORITY_VARIANT[ticket.priority]} className="text-[10px] px-1.5 py-0">
             {ticket.priority}
           </Badge>
           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">

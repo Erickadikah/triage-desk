@@ -12,12 +12,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const priorityVariant = {
-  High: "high",
-  Medium: "medium",
-  Low: "low",
-} as const;
+import { PRIORITY_VARIANT } from "@/lib/utils";
 
 export default function SubmitTicketPage() {
   const [title, setTitle] = useState("");
@@ -129,7 +124,7 @@ export default function SubmitTicketPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant={priorityVariant[created.priority]}>
+              <Badge variant={PRIORITY_VARIANT[created.priority]}>
                 {created.priority} Priority
               </Badge>
               <Badge variant="secondary">{created.category}</Badge>
@@ -156,7 +151,7 @@ export default function SubmitTicketPage() {
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" />
             </svg>
             <p className="text-sm font-medium text-green-800">Ticket created successfully!</p>
-            <button onClick={() => setToast(false)} className="ml-2 text-green-600 hover:text-green-800">
+            <button onClick={() => setToast(false)} className="ml-2 text-green-600 hover:text-green-800" aria-label="Dismiss notification">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 6 6 18" /><path d="m6 6 12 12" />
               </svg>

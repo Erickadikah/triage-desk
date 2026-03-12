@@ -19,7 +19,7 @@ export function Navbar() {
     }
     window.addEventListener(AUTH_EVENT, onAuthChange);
     return () => window.removeEventListener(AUTH_EVENT, onAuthChange);
-  }, [pathname]);
+  }, []);
 
   function handleLogout() {
     removeToken();
