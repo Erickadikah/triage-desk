@@ -333,3 +333,42 @@ def test_get_single_ticket_not_found(client, mock_triage):
     fake_id = "00000000-0000-0000-0000-000000000000"
     resp = client.get(f"/tickets/{fake_id}", headers=headers)
     assert resp.status_code == 404
+
+
+# --- Delete Ticket (protected) ---
+
+def test_delete_ticket_success(client, mock_triage):
+    headers = auth_header(client)
+
+    create_resp = client.post("/tickets", json={
+        "title": "Ticket to delete completely",
+        "description": "This ticket will be deleted and should no longer exist.",
+        "customer_email": "delete@example.com",
+    })
+    ticket_id = create_resp.json()["id"]
+
+    resp = client.delete(f"/tickets/{ticket_id}", headers=headers)
+    assert resp.status_code == 204
+
+    # Verify it's gone
+    get_resp = client.get(f"/tickets/{ticket_id}", headers=headers)
+    assert get_resp.status_code == 404
+
+
+def test_delete_ticket_unauthorized(client, mock_triage):
+    create_resp = client.post("/tickets", json={
+        "title": "Unauthorized delete test ticket",
+        "description": "Trying to delete without authentication should fail.",
+        "customer_email": "noauth@example.com",
+    })
+    ticket_id = create_resp.json()["id"]
+
+    resp = client.delete(f"/tickets/{ticket_id}")
+    assert resp.status_code == 403
+
+
+def test_delete_ticket_not_found(client, mock_triage):
+    headers = auth_header(client)
+    fake_id = "00000000-0000-0000-0000-000000000000"
+    resp = client.delete(f"/tickets/{fake_id}", headers=headers)
+    assert resp.status_code == 404
