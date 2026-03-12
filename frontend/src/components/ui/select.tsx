@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
+import { ChevronDown, Check } from "lucide-react";
 
 interface SelectOption {
   value: string;
@@ -45,20 +46,7 @@ function Select({ value, onChange, options, placeholder, className, size = "defa
         )}
       >
         <span className="truncate">{selected ? selected.label : placeholder || "Select..."}</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={cn("shrink-0 ml-2 text-muted-foreground transition-transform", open && "rotate-180")}
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        <ChevronDown className={cn("h-4 w-4 shrink-0 ml-2 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
       {open && (
@@ -79,20 +67,7 @@ function Select({ value, onChange, options, placeholder, className, size = "defa
                 )}
               >
                 {option.value === value && (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mr-2 shrink-0"
-                  >
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
+                  <Check className="h-3.5 w-3.5 mr-2 shrink-0" />
                 )}
                 <span className={option.value !== value ? "ml-6" : ""}>{option.label}</span>
               </button>
