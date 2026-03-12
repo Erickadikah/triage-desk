@@ -8,7 +8,7 @@ from app.models.ticket import TicketCategory, TicketPriority
 
 logger = logging.getLogger(__name__)
 
-TRIAGE_PROMPT = """You are a smart customer support triage assistant. 
+TRIAGE_PROMPT = """You are a smart customer support triage assistant.
 Analyze the following support ticket and classify it.
 
 Ticket Title: {title}
@@ -29,25 +29,40 @@ Priority guidelines:
 Respond with ONLY the JSON. No markdown, no extra text."""
 
 
-def _get_mock_triage(title: str, description: str) -> AITriageResult:
-    """Fallback mock triage when AI is unavailable."""
-    logger.warning("Using mock triage fallback")
-    desc_lower = (title + " " + description).lower()
+def _parse_ai_response(raw: str) -> AITriageResult:
+    """Parse a JSON response from any LLM into an AITriageResult."""
+    # Strip markdown code fences if present
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
 
-    if any(word in desc_lower for word in ["payment", "bill", "charge", "invoice", "refund"]):
+    parsed = json.loads(cleaned)
+    return AITriageResult(
+        category=TicketCategory(parsed["category"]),
+        priority=TicketPriority(parsed["priority"]),
+        reasoning=parsed["reasoning"],
+    )
+
+
+def _get_mock_triage(title: str, description: str) -> AITriageResult:
+    """Fallback mock triage when all AI providers are unavailable."""
+    logger.warning("Using keyword-based fallback triage")
+    text = (title + " " + description).lower()
+
+    if any(w in text for w in ["payment", "bill", "charge", "invoice", "refund"]):
         category = TicketCategory.BILLING
-    elif any(word in desc_lower for word in ["bug", "error", "crash", "broken", "not working", "fail"]):
+    elif any(w in text for w in ["bug", "error", "crash", "broken", "not working", "fail"]):
         category = TicketCategory.TECHNICAL_BUG
-    elif any(word in desc_lower for word in ["feature", "request", "add", "improve", "suggest"]):
+    elif any(w in text for w in ["feature", "request", "add", "improve", "suggest"]):
         category = TicketCategory.FEATURE_REQUEST
-    elif any(word in desc_lower for word in ["account", "login", "password", "access"]):
+    elif any(w in text for w in ["account", "login", "password", "access"]):
         category = TicketCategory.ACCOUNT
     else:
         category = TicketCategory.GENERAL
 
-    if any(word in desc_lower for word in ["urgent", "critical", "down", "loss", "security", "breach"]):
+    if any(w in text for w in ["urgent", "critical", "down", "loss", "security", "breach"]):
         priority = TicketPriority.HIGH
-    elif any(word in desc_lower for word in ["broken", "error", "fail", "payment"]):
+    elif any(w in text for w in ["broken", "error", "fail", "payment"]):
         priority = TicketPriority.MEDIUM
     else:
         priority = TicketPriority.LOW
@@ -55,58 +70,46 @@ def _get_mock_triage(title: str, description: str) -> AITriageResult:
     return AITriageResult(
         category=category,
         priority=priority,
-        reasoning="Classified using keyword-based fallback due to AI service unavailability."
+        reasoning="Classified using keyword-based fallback due to AI service unavailability.",
     )
+
+
+def _triage_with_claude(prompt: str) -> AITriageResult:
+    """Attempt triage using Claude API."""
+    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1000,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = message.content[0].text.strip()
+    logger.info(f"Claude triage response: {raw}")
+    return _parse_ai_response(raw)
+
 
 
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry=retry_if_exception_type((anthropic.APIConnectionError, anthropic.RateLimitError)),
-    reraise=False
+    reraise=False,
 )
 async def triage_ticket(title: str, description: str) -> AITriageResult:
     """
-    Use Claude to automatically categorize and prioritize a support ticket.
-    Includes retry logic for transient failures and graceful fallback.
+    AI triage with fallback:
+      1. Claude (if ANTHROPIC_API_KEY is set)
+      2. Keyword-based fallback (always available)
     """
+    prompt = TRIAGE_PROMPT.format(title=title, description=description)
+
+    # Layer 1: Claude
+    if settings.ANTHROPIC_API_KEY:
+        try:
+            return _triage_with_claude(prompt)
+        except Exception as e:
+            logger.error(f"Claude failed: {e}")
+
+    # Layer 2: Keyword fallback
     if not settings.ANTHROPIC_API_KEY:
-        logger.warning("ANTHROPIC_API_KEY not set — using mock triage")
-        return _get_mock_triage(title, description)
-
-    try:
-        client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1000,
-            messages=[
-                {
-                    "role": "user",
-                    "content": TRIAGE_PROMPT.format(title=title, description=description)
-                }
-            ]
-        )
-
-        raw_response = message.content[0].text.strip()
-        logger.info(f"Claude triage response: {raw_response}")
-
-        parsed = json.loads(raw_response)
-
-        return AITriageResult(
-            category=TicketCategory(parsed["category"]),
-            priority=TicketPriority(parsed["priority"]),
-            reasoning=parsed["reasoning"]
-        )
-
-    except anthropic.APIStatusError as e:
-        logger.error(f"Claude API error {e.status_code}: {e.message}")
-        return _get_mock_triage(title, description)
-
-    except (json.JSONDecodeError, KeyError, ValueError) as e:
-        logger.error(f"Failed to parse Claude response: {e}")
-        return _get_mock_triage(title, description)
-
-    except Exception as e:
-        logger.error(f"Unexpected error during triage: {e}")
-        return _get_mock_triage(title, description)
+        logger.warning("No AI API key configured — using keyword fallback")
+    return _get_mock_triage(title, description)

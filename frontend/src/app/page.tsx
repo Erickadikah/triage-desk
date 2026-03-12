@@ -26,6 +26,7 @@ export default function SubmitTicketPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<Ticket | null>(null);
+  const [toast, setToast] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +39,8 @@ export default function SubmitTicketPage() {
         customer_email: email,
       });
       setCreated(ticket);
+      setToast(true);
+      setTimeout(() => setToast(false), 4000);
       setTitle("");
       setDescription("");
       setEmail("");
@@ -143,6 +146,23 @@ export default function SubmitTicketPage() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Success toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" />
+            </svg>
+            <p className="text-sm font-medium text-green-800">Ticket created successfully!</p>
+            <button onClick={() => setToast(false)} className="ml-2 text-green-600 hover:text-green-800">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -63,6 +63,18 @@ function DashboardContent() {
     fetchTickets();
   }, [fetchTickets]);
 
+  async function handleDelete(ticketId: string) {
+    const previousTickets = [...tickets];
+    setTickets((prev) => prev.filter((t) => t.id !== ticketId));
+
+    try {
+      await api.deleteTicket(ticketId);
+    } catch (err) {
+      setTickets(previousTickets);
+      setError(err instanceof Error ? err.message : "Failed to delete ticket");
+    }
+  }
+
   async function handleStatusChange(ticketId: string, newStatus: string) {
     // Optimistic update — move the ticket immediately
     const previousTickets = [...tickets];
@@ -101,14 +113,16 @@ function DashboardContent() {
         <div className="flex items-center gap-3">
           <Select
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
+            onChange={setPriorityFilter}
             className="w-44"
-          >
-            <option value="">All Priorities</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </Select>
+            placeholder="All Priorities"
+            options={[
+              { value: "", label: "All Priorities" },
+              { value: "High", label: "High" },
+              { value: "Medium", label: "Medium" },
+              { value: "Low", label: "Low" },
+            ]}
+          />
         </div>
       </div>
 
@@ -132,6 +146,7 @@ function DashboardContent() {
               color={col.color}
               tickets={ticketsByStatus(col.status)}
               onStatusChange={handleStatusChange}
+              onDelete={handleDelete}
             />
           ))}
         </div>
@@ -145,11 +160,13 @@ function KanbanColumn({
   color,
   tickets,
   onStatusChange,
+  onDelete,
 }: {
   label: string;
   color: string;
   tickets: Ticket[];
   onStatusChange: (id: string, status: string) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
     <div className="flex flex-col rounded-lg border border-border bg-muted/30 min-h-[60vh]">
@@ -174,6 +191,7 @@ function KanbanColumn({
               key={ticket.id}
               ticket={ticket}
               onStatusChange={onStatusChange}
+              onDelete={onDelete}
             />
           ))
         )}
@@ -185,14 +203,27 @@ function KanbanColumn({
 function TicketCard({
   ticket,
   onStatusChange,
+  onDelete,
 }: {
   ticket: Ticket;
   onStatusChange: (id: string, status: string) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-3 space-y-2">
-        <h3 className="text-sm font-medium leading-snug">{ticket.title}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-sm font-medium leading-snug">{ticket.title}</h3>
+          <button
+            onClick={() => onDelete(ticket.id)}
+            className="text-muted-foreground hover:text-destructive transition-colors shrink-0 p-0.5"
+            title="Delete ticket"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+            </svg>
+          </button>
+        </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
           <Badge variant={priorityVariant[ticket.priority]} className="text-[10px] px-1.5 py-0">
@@ -219,13 +250,15 @@ function TicketCard({
           </span>
           <Select
             value={ticket.status}
-            onChange={(e) => onStatusChange(ticket.id, e.target.value)}
-            className="h-7 text-xs w-[110px] px-1.5 py-0"
-          >
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-          </Select>
+            onChange={(val) => onStatusChange(ticket.id, val)}
+            className="w-[140px]"
+            size="sm"
+            options={[
+              { value: "Open", label: "Open" },
+              { value: "In Progress", label: "In Progress" },
+              { value: "Resolved", label: "Resolved" },
+            ]}
+          />
         </div>
       </CardContent>
     </Card>
